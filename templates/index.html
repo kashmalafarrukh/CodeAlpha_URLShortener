@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL Shortener</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; display: flex;
+           justify-content: center; padding-top: 80px; }
+    .card { background: #fff; padding: 32px; border-radius: 12px; width: 460px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; }
+    input { width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc;
+            border-radius: 8px; box-sizing: border-box; }
+    button { margin-top: 12px; width: 100%; padding: 12px; font-size: 15px;
+             background: #2563eb; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    #result { margin-top: 20px; word-break: break-all; }
+    .error { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>URL Shortener</h1>
+    <input id="url" type="text" placeholder="Paste your long URL here (https://...)">
+    <button onclick="shorten()">Shorten</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function shorten() {
+      const url = document.getElementById("url").value;
+      const result = document.getElementById("result");
+      const res = await fetch("/api/shorten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        result.innerHTML = `Your short link: <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
+      } else {
+        result.innerHTML = `<span class="error">${data.error}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
