@@ -5,44 +5,215 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>URL Shortener</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; display: flex;
-           justify-content: center; padding-top: 80px; }
-    .card { background: #fff; padding: 32px; border-radius: 12px; width: 460px;
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0;
+           padding: 40px 16px; color: #1f2937; }
+    .container { max-width: 760px; margin: 0 auto; }
+    .card { background: #fff; padding: 28px; border-radius: 12px; margin-bottom: 24px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    h1 { margin-top: 0; }
-    input { width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc;
-            border-radius: 8px; box-sizing: border-box; }
-    button { margin-top: 12px; width: 100%; padding: 12px; font-size: 15px;
-             background: #2563eb; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
+    h1 { margin: 0 0 4px; }
+    .subtitle { color: #6b7280; margin: 0 0 20px; }
+    label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
+    input, select { width: 100%; padding: 11px; font-size: 15px; border: 1px solid #d1d5db;
+                    border-radius: 8px; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    button { cursor: pointer; font-size: 15px; border: 0; border-radius: 8px; }
+    .primary { margin-top: 18px; width: 100%; padding: 12px; background: #2563eb; color: #fff; }
+    .primary:hover { background: #1d4ed8; }
+    .small { padding: 6px 12px; background: #e5e7eb; }
+    .small:hover { background: #d1d5db; }
     #result { margin-top: 20px; word-break: break-all; }
-    .error { color: #dc2626; }
+    .success { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 16px; border-radius: 8px; }
+    .success img { display: block; margin-top: 12px; width: 140px; height: 140px; }
+    .error { color: #dc2626; font-weight: bold; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+    td.original { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .expired { color: #dc2626; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>URL Shortener</h1>
-    <input id="url" type="text" placeholder="Paste your long URL here (https://...)">
-    <button onclick="shorten()">Shorten</button>
-    <div id="result"></div>
+  <div class="container">
+    <div class="card">
+      <h1>URL Shortener</h1>
+      <p class="subtitle">Turn long links into short, trackable ones.</p>
+
+      <label for="url">Long URL</label>
+      <input id="url" type="text" placeholder="https://example.com/very/long/link">
+
+      <div class="row">
+        <div>
+          <label for="custom">Custom name (optional)</label>
+          <input id="custom" type="text" placeholder="e.g. myportfolio">
+        </div>
+        <div>
+          <label for="expiry">Expires after</label>
+          <select id="expiry">
+            <option value="">Never</option>
+            <option value="1">1 day</option>
+            <option value="7">7 days</option>
+            <option value="30">30 days</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="primary" id="shorten-btn">Shorten</button>
+      <div id="result"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Recent links</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Short link</th>
+              <th>Original URL</th>
+              <th>Clicks</th>
+              <th>Expires (UTC)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="links-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
-    async function shorten() {
-      const url = document.getElementById("url").value;
-      const result = document.getElementById("result");
-      const res = await fetch("/api/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
+    const $ = (id) => document.getElementById(id);
+
+    function copyText(text, button) {
+      navigator.clipboard.writeText(text).then(() => {
+        const old = button.textContent;
+        button.textContent = "Copied!";
+        setTimeout(() => { button.textContent = old; }, 1500);
       });
-      const data = await res.json();
-      if (res.ok) {
-        result.innerHTML = `Your short link: <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
-      } else {
-        result.innerHTML = `<span class="error">${data.error}</span>`;
+    }
+
+    function showError(message) {
+      const result = $("result");
+      result.textContent = "";
+      const span = document.createElement("span");
+      span.className = "error";
+      span.textContent = message;
+      result.appendChild(span);
+    }
+
+    function showSuccess(data) {
+      const result = $("result");
+      result.textContent = "";
+
+      const box = document.createElement("div");
+      box.className = "success";
+
+      const label = document.createElement("div");
+      label.textContent = "Your short link:";
+
+      const link = document.createElement("a");
+      link.href = data.short_url;
+      link.target = "_blank";
+      link.textContent = data.short_url;
+
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "small";
+      copyBtn.style.marginLeft = "10px";
+      copyBtn.textContent = "Copy";
+      copyBtn.addEventListener("click", () => copyText(data.short_url, copyBtn));
+
+      const qr = document.createElement("img");
+      qr.src = "/api/qr/" + encodeURIComponent(data.short_code);
+      qr.alt = "QR code for the short link";
+
+      box.append(label, link, copyBtn, qr);
+      result.appendChild(box);
+    }
+
+    async function shorten() {
+      const payload = {
+        url: $("url").value.trim(),
+        custom_code: $("custom").value.trim(),
+        expires_in_days: $("expiry").value
+      };
+
+      try {
+        const res = await fetch("/api/shorten", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError(data.error);
+          return;
+        }
+        showSuccess(data);
+        loadLinks();
+      } catch (err) {
+        showError("Could not reach the server. Is it running?");
       }
     }
+
+    function makeCell(text, className) {
+      const td = document.createElement("td");
+      td.textContent = text;
+      if (className) td.className = className;
+      return td;
+    }
+
+    async function loadLinks() {
+      const body = $("links-body");
+      try {
+        const res = await fetch("/api/links");
+        const links = await res.json();
+        body.textContent = "";
+
+        if (links.length === 0) {
+          const tr = document.createElement("tr");
+          const td = makeCell("No links yet. Create your first one above.");
+          td.colSpan = 5;
+          tr.appendChild(td);
+          body.appendChild(tr);
+          return;
+        }
+
+        links.forEach((item) => {
+          const tr = document.createElement("tr");
+
+          const linkTd = document.createElement("td");
+          const a = document.createElement("a");
+          a.href = item.short_url;
+          a.target = "_blank";
+          a.textContent = item.short_code;
+          linkTd.appendChild(a);
+
+          const originalTd = makeCell(item.original_url, "original");
+          originalTd.title = item.original_url;
+
+          const expiresText = item.expires_at
+            ? item.expires_at + (item.expired ? " (expired)" : "")
+            : "Never";
+          const expiresTd = makeCell(expiresText, item.expired ? "expired" : "");
+
+          const actionTd = document.createElement("td");
+          const btn = document.createElement("button");
+          btn.className = "small";
+          btn.textContent = "Copy";
+          btn.addEventListener("click", () => copyText(item.short_url, btn));
+          actionTd.appendChild(btn);
+
+          tr.append(linkTd, originalTd, makeCell(item.clicks), expiresTd, actionTd);
+          body.appendChild(tr);
+        });
+      } catch (err) {
+        body.textContent = "";
+      }
+    }
+
+    $("shorten-btn").addEventListener("click", shorten);
+    loadLinks();
   </script>
 </body>
 </html>

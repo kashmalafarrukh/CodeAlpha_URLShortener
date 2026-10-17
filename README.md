@@ -27,4 +27,4 @@ Python, Flask, SQLite, HTML, CSS, JavaScript
 | GET | /api/stats/<short_code> | Shows click count and details |
 
 ## Author
-Kashmala Farrukh | CodeAlpha Backend Development Intern
+Kashmala Farrukh | CodeAlpha Backend Development 
