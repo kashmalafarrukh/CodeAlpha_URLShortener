@@ -14,7 +14,7 @@ app = Flask(__name__)
 DATABASE = "urls.db"
 ALPHABET = string.ascii_letters + string.digits
 CUSTOM_CODE_PATTERN = re.compile(r"[A-Za-z0-9_-]{3,30}")
-RESERVED_CODES = {"api", "static"}
+RESERVED_CODES = {"api", "static", "health"}
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -221,6 +221,9 @@ def qr_code(short_code):
     buffer.seek(0)
     return send_file(buffer, mimetype="image/png")
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 init_db()
 
