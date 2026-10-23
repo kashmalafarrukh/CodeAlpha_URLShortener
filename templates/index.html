@@ -3,55 +3,159 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>URL Shortener</title>
+  <title>ShortLink | URL Shortener</title>
   <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+    }
     * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0;
-           padding: 40px 16px; color: #1f2937; }
-    .container { max-width: 760px; margin: 0 auto; }
-    .card { background: #fff; padding: 28px; border-radius: 12px; margin-bottom: 24px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    h1 { margin: 0 0 4px; }
-    .subtitle { color: #6b7280; margin: 0 0 20px; }
-    label { display: block; font-size: 14px; font-weight: bold; margin: 14px 0 6px; }
-    input, select { width: 100%; padding: 11px; font-size: 15px; border: 1px solid #d1d5db;
-                    border-radius: 8px; }
-    .row { display: flex; gap: 12px; }
-    .row > div { flex: 1; }
-    button { cursor: pointer; font-size: 15px; border: 0; border-radius: 8px; }
-    .primary { margin-top: 18px; width: 100%; padding: 12px; background: #2563eb; color: #fff; }
-    .primary:hover { background: #1d4ed8; }
-    .small { padding: 6px 12px; background: #e5e7eb; }
-    .small:hover { background: #d1d5db; }
-    #result { margin-top: 20px; word-break: break-all; }
-    .success { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 16px; border-radius: 8px; }
-    .success img { display: block; margin-top: 12px; width: 140px; height: 140px; }
-    .error { color: #dc2626; font-weight: bold; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .navbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+    .navbar-inner {
+      max-width: 960px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .brand svg { width: 26px; height: 26px; color: var(--primary); }
+    .status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+    .dot.online { background: var(--success); }
+    .dot.offline { background: var(--danger); }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 0 20px 40px; }
+    .hero { text-align: center; padding: 44px 0 28px; }
+    .hero h1 { margin: 0 0 8px; font-size: 34px; letter-spacing: -0.5px; }
+    .hero p { margin: 0; color: var(--muted); font-size: 17px; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 26px; margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    .card h2 { margin: 0 0 18px; font-size: 18px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+    input, select {
+      width: 100%; padding: 11px 12px; font-size: 15px; font-family: inherit;
+      border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .field { margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+    .btn {
+      display: inline-block; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit;
+      padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border);
+      background: #fff; color: var(--text); text-decoration: none;
+    }
+    .btn:hover { background: #f1f5f9; text-decoration: none; }
+    .btn-primary {
+      width: 100%; padding: 13px; font-size: 15px; background: var(--primary);
+      border-color: var(--primary); color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #result { margin-top: 20px; }
+    .message-error {
+      background: var(--danger-bg); border: 1px solid #fecaca; color: var(--danger);
+      padding: 12px 14px; border-radius: 9px; font-weight: 600; font-size: 14px;
+    }
+    .result-box {
+      display: flex; gap: 20px; align-items: center; justify-content: space-between;
+      background: var(--success-bg); border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px;
+    }
+    .result-info { min-width: 0; }
+    .result-label { font-size: 12px; font-weight: 700; color: var(--success); text-transform: uppercase; letter-spacing: 0.5px; }
+    .result-link { display: block; font-size: 20px; font-weight: 700; margin: 4px 0; word-break: break-all; }
+    .result-meta { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .result-box img { width: 120px; height: 120px; border-radius: 8px; background: #fff; padding: 6px; border: 1px solid var(--border); }
+
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
-    td.original { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .expired { color: #dc2626; }
+    th {
+      text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    td.destination { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge-active { background: var(--success-bg); color: var(--success); }
+    .badge-expired { background: var(--danger-bg); color: var(--danger); }
+    .empty { text-align: center; color: var(--muted); padding: 28px 12px; }
+
+    .footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 20px 36px; }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 27px; }
+      .result-box { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>URL Shortener</h1>
-      <p class="subtitle">Turn long links into short, trackable ones.</p>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/>
+          <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/>
+        </svg>
+        ShortLink
+      </div>
+      <div class="status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Checking...</span>
+      </div>
+    </div>
+  </header>
 
-      <label for="url">Long URL</label>
-      <input id="url" type="text" placeholder="https://example.com/very/long/link">
+  <main class="container">
+    <section class="hero">
+      <h1>Shorten links. Track every click.</h1>
+      <p>Create clean short URLs with custom names, expiry dates and QR codes.</p>
+    </section>
 
-      <div class="row">
-        <div>
+    <section class="card">
+      <h2>Create a short link</h2>
+
+      <div class="field">
+        <label for="url">Destination URL</label>
+        <input id="url" type="text" placeholder="https://example.com/a/very/long/link" autocomplete="off">
+      </div>
+
+      <div class="grid">
+        <div class="field">
           <label for="custom">Custom name (optional)</label>
-          <input id="custom" type="text" placeholder="e.g. myportfolio">
+          <input id="custom" type="text" placeholder="e.g. my-portfolio" autocomplete="off">
+          <div class="hint">3 to 30 characters: letters, numbers, - or _</div>
         </div>
-        <div>
-          <label for="expiry">Expires after</label>
+        <div class="field">
+          <label for="expiry">Link expiry</label>
           <select id="expiry">
-            <option value="">Never</option>
+            <option value="">Never expires</option>
             <option value="1">1 day</option>
             <option value="7">7 days</option>
             <option value="30">30 days</option>
@@ -59,19 +163,20 @@
         </div>
       </div>
 
-      <button class="primary" id="shorten-btn">Shorten</button>
+      <button class="btn btn-primary" id="shorten-btn">Shorten URL</button>
       <div id="result"></div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2 style="margin-top:0">Recent links</h2>
+    <section class="card">
+      <h2>Recent links</h2>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Short link</th>
-              <th>Original URL</th>
+              <th>Destination</th>
               <th>Clicks</th>
+              <th>Status</th>
               <th>Expires (UTC)</th>
               <th></th>
             </tr>
@@ -79,11 +184,22 @@
           <tbody id="links-body"></tbody>
         </table>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Built with Flask and SQLite &middot; CodeAlpha Backend Development Internship &middot; Task 1
+  </footer>
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
 
     function copyText(text, button) {
       navigator.clipboard.writeText(text).then(() => {
@@ -93,51 +209,74 @@
       });
     }
 
+    async function checkHealth() {
+      const dot = $("status-dot");
+      const text = $("status-text");
+      try {
+        const res = await fetch("/health");
+        if (!res.ok) throw new Error("unhealthy");
+        dot.className = "dot online";
+        text.textContent = "API online";
+      } catch (err) {
+        dot.className = "dot offline";
+        text.textContent = "API offline";
+      }
+    }
+
     function showError(message) {
       const result = $("result");
       result.textContent = "";
-      const span = document.createElement("span");
-      span.className = "error";
-      span.textContent = message;
-      result.appendChild(span);
+      result.appendChild(el("div", "message-error", message));
     }
 
-    function showSuccess(data) {
+    function showResult(data) {
       const result = $("result");
       result.textContent = "";
 
-      const box = document.createElement("div");
-      box.className = "success";
+      const box = el("div", "result-box");
+      const info = el("div", "result-info");
 
-      const label = document.createElement("div");
-      label.textContent = "Your short link:";
+      info.appendChild(el("div", "result-label", "Your short link is ready"));
 
-      const link = document.createElement("a");
+      const link = el("a", "result-link", data.short_url);
       link.href = data.short_url;
       link.target = "_blank";
-      link.textContent = data.short_url;
+      link.rel = "noopener";
+      info.appendChild(link);
 
-      const copyBtn = document.createElement("button");
-      copyBtn.className = "small";
-      copyBtn.style.marginLeft = "10px";
-      copyBtn.textContent = "Copy";
+      info.appendChild(el("div", "result-meta",
+        data.expires_at ? "Expires " + data.expires_at + " UTC" : "Never expires"));
+
+      const actions = el("div", "result-actions");
+      const copyBtn = el("button", "btn", "Copy link");
       copyBtn.addEventListener("click", () => copyText(data.short_url, copyBtn));
 
-      const qr = document.createElement("img");
-      qr.src = "/api/qr/" + encodeURIComponent(data.short_code);
-      qr.alt = "QR code for the short link";
+      const qrUrl = "/api/qr/" + encodeURIComponent(data.short_code);
+      const download = el("a", "btn", "Download QR");
+      download.href = qrUrl;
+      download.download = data.short_code + "-qr.png";
 
-      box.append(label, link, copyBtn, qr);
+      actions.append(copyBtn, download);
+      info.appendChild(actions);
+
+      const qr = el("img");
+      qr.src = qrUrl;
+      qr.alt = "QR code for " + data.short_url;
+
+      box.append(info, qr);
       result.appendChild(box);
     }
 
     async function shorten() {
+      const button = $("shorten-btn");
       const payload = {
         url: $("url").value.trim(),
         custom_code: $("custom").value.trim(),
         expires_in_days: $("expiry").value
       };
 
+      button.disabled = true;
+      button.textContent = "Shortening...";
       try {
         const res = await fetch("/api/shorten", {
           method: "POST",
@@ -149,18 +288,18 @@
           showError(data.error);
           return;
         }
-        showSuccess(data);
+        showResult(data);
         loadLinks();
       } catch (err) {
         showError("Could not reach the server. Is it running?");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Shorten URL";
       }
     }
 
     function makeCell(text, className) {
-      const td = document.createElement("td");
-      td.textContent = text;
-      if (className) td.className = className;
-      return td;
+      return el("td", className, text);
     }
 
     async function loadLinks() {
@@ -171,40 +310,45 @@
         body.textContent = "";
 
         if (links.length === 0) {
-          const tr = document.createElement("tr");
-          const td = makeCell("No links yet. Create your first one above.");
-          td.colSpan = 5;
+          const tr = el("tr");
+          const td = el("td", "empty", "No links yet. Create your first one above.");
+          td.colSpan = 6;
           tr.appendChild(td);
           body.appendChild(tr);
           return;
         }
 
         links.forEach((item) => {
-          const tr = document.createElement("tr");
+          const tr = el("tr");
 
-          const linkTd = document.createElement("td");
-          const a = document.createElement("a");
+          const linkTd = el("td");
+          const a = el("a", "", item.short_code);
           a.href = item.short_url;
           a.target = "_blank";
-          a.textContent = item.short_code;
+          a.rel = "noopener";
           linkTd.appendChild(a);
 
-          const originalTd = makeCell(item.original_url, "original");
-          originalTd.title = item.original_url;
+          const destination = makeCell(item.original_url, "destination");
+          destination.title = item.original_url;
 
-          const expiresText = item.expires_at
-            ? item.expires_at + (item.expired ? " (expired)" : "")
-            : "Never";
-          const expiresTd = makeCell(expiresText, item.expired ? "expired" : "");
+          const statusTd = el("td");
+          statusTd.appendChild(el("span",
+            "badge " + (item.expired ? "badge-expired" : "badge-active"),
+            item.expired ? "Expired" : "Active"));
 
-          const actionTd = document.createElement("td");
-          const btn = document.createElement("button");
-          btn.className = "small";
-          btn.textContent = "Copy";
-          btn.addEventListener("click", () => copyText(item.short_url, btn));
-          actionTd.appendChild(btn);
+          const actionTd = el("td");
+          const copyBtn = el("button", "btn", "Copy");
+          copyBtn.addEventListener("click", () => copyText(item.short_url, copyBtn));
+          actionTd.appendChild(copyBtn);
 
-          tr.append(linkTd, originalTd, makeCell(item.clicks), expiresTd, actionTd);
+          tr.append(
+            linkTd,
+            destination,
+            makeCell(String(item.clicks)),
+            statusTd,
+            makeCell(item.expires_at || "Never"),
+            actionTd
+          );
           body.appendChild(tr);
         });
       } catch (err) {
@@ -213,6 +357,8 @@
     }
 
     $("shorten-btn").addEventListener("click", shorten);
+    $("url").addEventListener("keydown", (e) => { if (e.key === "Enter") shorten(); });
+    checkHealth();
     loadLinks();
   </script>
 </body>
